@@ -1,0 +1,48 @@
+{
+  "name": "ball-battle",
+  "version": "1.0.0",
+  "description": "TikTok LIVE ball battle",
+  "main": "main.js",
+  "author": "ball-battle",
+  "license": "UNLICENSED",
+  "private": true,
+  "dependencies": {
+    "tiktok-live-connector": "^2.5.0"
+  },
+  "devDependencies": {
+    "electron": "^44.4.5",
+    "electron-builder": "^26.15.3",
+    "playwright-core": "^1.63.0"
+  },
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win portable --x64"
+  },
+  "build": {
+    "appId": "com.ballbattle.app",
+    "productName": "Ball Battle",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "gifts.js",
+      "renderer/**/*",
+      "package.json"
+    ],
+    "asar": true,
+    "win": {
+      "target": [
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "signAndEditExecutable": false,
+      "artifactName": "BallBattle.exe"
+    }
+  }
+}

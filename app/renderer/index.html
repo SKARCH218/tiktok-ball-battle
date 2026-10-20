@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy"
+      content="default-src 'self'; img-src 'self' https: data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self'">
+<title>Ball Battle</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #05070d; overflow: hidden;
+    font-family: "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif; color: #e5e7eb; }
+  body { display: flex; align-items: center; justify-content: center; }
+  canvas { display: block; }
+  .hidden { display: none !important; }
+
+  #setup {
+    position: fixed; inset: 0; overflow-y: auto; background: #0b0e17;
+    display: flex; justify-content: center; padding: 20px 16px 28px; box-sizing: border-box;
+  }
+  .panel { width: 100%; max-width: 420px; }
+  h1 { font-size: 22px; margin: 4px 0 2px; }
+  .sub { color: #9ca3af; font-size: 13px; margin: 0 0 16px; }
+  fieldset { border: 1px solid #263045; border-radius: 10px; margin: 0 0 12px; padding: 10px 12px 12px; }
+  legend { padding: 0 6px; color: #9ca3af; font-size: 12px; }
+  label { display: block; font-size: 13px; margin: 8px 0 3px; color: #cbd5e1; }
+  input[type=text], input[type=number], select {
+    width: 100%; box-sizing: border-box; padding: 8px 10px; border-radius: 8px;
+    border: 1px solid #334155; background: #111827; color: #f1f5f9; font-size: 14px;
+  }
+  input[type=color] { width: 44px; height: 34px; padding: 0; border: 1px solid #334155; border-radius: 8px; background: #111827; }
+  .row { display: flex; gap: 8px; align-items: flex-end; }
+  .row > div { flex: 1; }
+  .row .narrow { flex: 0 0 64px; }
+  .row .color { flex: 0 0 auto; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 10px; }
+  .check { display: flex; align-items: center; gap: 8px; margin: 10px 0 0; font-size: 13px; }
+  details { margin: 0 0 12px; }
+  summary { cursor: pointer; color: #9ca3af; font-size: 13px; padding: 4px 0; }
+  .buttons { display: flex; gap: 8px; margin-top: 4px; }
+  button { font: inherit; cursor: pointer; border-radius: 10px; border: 0; }
+  #start { flex: 1; padding: 13px; font-size: 16px; font-weight: 700; background: #22c55e; color: #052e12; }
+  #start:hover { background: #4ade80; }
+  #reset { padding: 13px 14px; font-size: 13px; background: #1f2937; color: #cbd5e1; border: 1px solid #334155; }
+  #error { color: #f87171; font-size: 13px; min-height: 18px; margin: 4px 0; }
+  .preview { flex: 0 0 72px; }
+  #bgpreview { width: 72px; height: 128px; border-radius: 8px; border: 1px solid #334155; display: block; }
+  .filepick { width: 100%; font-size: 12px; color: #cbd5e1; }
+  .filename { font-size: 11px; color: #9ca3af; margin-top: 3px; word-break: break-all; }
+  .hint { color: #9ca3af; font-size: 12px; line-height: 1.5; margin-top: 12px; }
+
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<div id="setup">
+  <div class="panel">
+    <h1>⚔ Ball Battle</h1>
+    <p class="sub">시청자가 채팅으로 팀에 참가해서 싸우는 TikTok LIVE 게임</p>
+
+    <fieldset>
+      <legend>방송</legend>
+      <label for="username">TikTok 아이디 (채팅/후원을 읽어올 방송)</label>
+      <input type="text" id="username" placeholder="@아이디" spellcheck="false" autocomplete="off">
+      <div class="check"><input type="checkbox" id="demo"><label for="demo" style="margin:0">데모 모드 (가짜 채팅·후원으로 미리 보기)</label></div>
+    </fieldset>
+
+    <fieldset>
+      <legend>팀 (채팅으로 이 글자를 치면 참가)</legend>
+      <div class="row">
+        <div class="narrow"><label for="key1">키</label><input type="text" id="key1" maxlength="3"></div>
+        <div><label for="name1">팀 1 이름</label><input type="text" id="name1" maxlength="10"></div>
+        <div class="color"><input type="color" id="color1"></div>
+      </div>
+      <div class="row">
+        <div class="narrow"><label for="key2">키</label><input type="text" id="key2" maxlength="3"></div>
+        <div><label for="name2">팀 2 이름</label><input type="text" id="name2" maxlength="10"></div>
+        <div class="color"><input type="color" id="color2"></div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>배경</legend>
+      <div class="row" style="align-items:flex-start">
+        <div>
+          <label for="background">배경 화면</label>
+          <select id="background"></select>
+          <div id="bgfile-row" class="hidden">
+            <label for="bgfile">이미지 파일</label>
+            <input type="file" id="bgfile" accept="image/*" class="filepick">
+            <div id="bgname" class="filename"></div>
+          </div>
+        </div>
+        <div class="preview"><canvas id="bgpreview" width="72" height="128"></canvas></div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>게임</legend>
+      <div class="grid">
+        <div><label for="base_hp">기본 체력</label><input type="number" id="base_hp" min="100" step="100"></div>
+        <div><label for="base_damage">기본 데미지</label><input type="number" id="base_damage" min="1"></div>
+        <div><label for="max_per_team">팀당 최대 인원</label><input type="number" id="max_per_team" min="2" max="300"></div>
+        <div><label for="layout">화면 분할</label>
+          <select id="layout"><option value="left-right">좌우</option><option value="top-bottom">상하</option></select></div>
+      </div>
+    </fieldset>
+
+    <details>
+      <summary>고급 설정</summary>
+      <div class="grid">
+        <div><label for="burst_size">연발 수</label><input type="number" id="burst_size" min="1" max="10"></div>
+        <div><label for="fire_interval">발사 간격(초)</label><input type="number" id="fire_interval" min="0.3" step="0.1"></div>
+        <div><label for="missile_speed">미사일 속도</label><input type="number" id="missile_speed" min="100" step="50"></div>
+      </div>
+    </details>
+
+    <div id="error"></div>
+    <div class="buttons">
+      <button id="start">시작하기</button>
+      <button id="reset" title="설정을 기본값으로 되돌리기">기본값</button>
+    </div>
+
+    <p class="hint">
+      시작하면 이 창을 TikTok LIVE 앱에서 화면(창) 캡처하세요.<br>
+      게임 중 <b>Esc</b> 키를 누르면 이 화면으로 돌아와요.<br>
+      체력을 높일수록 게임이 오래 가요. 탈락하면 부활하지 않고, 후원은 일정 시간만 강화돼요.<br>
+      후원 종류에 따라 공격이 달라져요 (장미·향수·도넛·하트·권투 글러브·머니건·은하 등). 화면 오른쪽 아래에 스킬 목록이 표시돼요. 데모 모드에서는 각 스킬 옆 ▶ 버튼으로 바로 시험해 볼 수 있어요.
+    </p>
+  </div>
+</div>
+
+<script src="weapons.js"></script>
+<script src="legend.js"></script>
+<script src="background.js"></script>
+<script src="game.js"></script>
+</body>
+</html>

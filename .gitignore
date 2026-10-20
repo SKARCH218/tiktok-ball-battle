@@ -1,0 +1,11 @@
+# build output and dependencies
+node_modules/
+app/dist/
+BallBattle.exe
+.venv/
+
+# not part of the app
+repo/
+battle/
+.omc/
+.DS_Store
